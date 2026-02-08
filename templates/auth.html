@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solaris OS | Secure Entry</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Orbitron:wght@500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --lux-cyan: #22d3ee;
+            --lux-bg: #020617;
+        }
+
+        body {
+            background: var(--lux-bg);
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            color: white;
+        }
+
+        /* Moving Starfield */
+        .star-field {
+            position: absolute;
+            inset: 0;
+            background: transparent url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/1231630/stars.png') repeat;
+            opacity: 0.3;
+            animation: move-stars 150s linear infinite;
+        }
+
+        @keyframes move-stars {
+            from { background-position: 0 0; }
+            to { background-position: -10000px 5000px; }
+        }
+
+        /* Crystal Glass Card */
+        .crystal-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+
+        .input-luxury {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .input-luxury:focus {
+            border-color: var(--lux-cyan);
+            box-shadow: 0 0 15px rgba(34,211,238,0.15);
+            background: rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen relative">
+
+<!-- Background -->
+<div class="star-field"></div>
+
+<!-- Login / Register Card -->
+<div class="relative z-10 w-full max-w-lg px-6">
+    <div class="crystal-card p-12 rounded-[2rem]">
+
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl orbitron tracking-tighter mb-2">
+                SOLARIS<span class="text-cyan-400 font-bold">.</span>
+            </h1>
+            <p id="modeText"
+               class="text-slate-500 text-[10px] orbitron tracking-[0.4em] uppercase">
+               Security Protocol Alpha
+            </p>
+        </div>
+
+        <!-- Form -->
+        <form onsubmit="submitForm(event)" class="space-y-8">
+
+            <div class="relative">
+                <label class="absolute -top-2 left-4 bg-[#0a1122] px-2 text-[9px] orbitron text-cyan-500 tracking-widest">
+                    COMMANDER_ID
+                </label>
+                <input id="username"
+                       type="text"
+                       class="input-luxury w-full rounded-xl px-6 py-4 text-sm outline-none"
+                       placeholder="Enter Identification...">
+            </div>
+
+            <div class="relative">
+                <label class="absolute -top-2 left-4 bg-[#0a1122] px-2 text-[9px] orbitron text-slate-500 tracking-widest">
+                    ACCESS_TOKEN
+                </label>
+                <input id="password"
+                       type="password"
+                       class="input-luxury w-full rounded-xl px-6 py-4 text-sm outline-none"
+                       placeholder="••••••••••••">
+            </div>
+
+            <button id="submitBtn"
+                    type="submit"
+                    class="w-full bg-cyan-600/10 border border-cyan-500/50
+                           hover:bg-cyan-600 hover:text-black
+                           text-cyan-400 font-bold py-4 rounded-xl
+                           transition-all orbitron text-xs tracking-[0.3em]">
+                INITIALIZE_LAUNCH
+            </button>
+        </form>
+
+        <!-- Toggle -->
+        <div class="mt-8 text-center">
+            <button onclick="toggleMode()"
+                    type="button"
+                    class="text-[10px] orbitron tracking-widest text-cyan-400 hover:underline">
+                NEW COMMANDER? REGISTER
+            </button>
+        </div>
+
+        <!-- Message -->
+        <p id="msg" class="mt-4 text-center text-sm"></p>
+
+        <div class="mt-10 text-center">
+            <p class="text-[9px] orbitron text-slate-600 tracking-[0.2em]">
+                CONNECTED VIA DEEP_SPACE_NETWORK // AES-256 ENCRYPTION
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- ================= JAVASCRIPT ================= -->
+<script>
+let isLogin = true;
+
+/* Clear old data */
+function clearForm() {
+    document.getElementById("username").value = "";
+    document.getElementById("password").value = "";
+    document.getElementById("msg").innerText = "";
+}
+
+/* Toggle Login / Register */
+function toggleMode(){
+    isLogin = !isLogin;
+
+    document.getElementById("submitBtn").innerText =
+        isLogin ? "INITIALIZE_LAUNCH" : "CREATE_COMMANDER";
+
+    document.getElementById("modeText").innerText =
+        isLogin ? "Security Protocol Alpha" : "Registration Protocol Beta";
+
+    clearForm(); // ✅ clear old values
+}
+
+/* Submit Login / Register */
+async function submitForm(e){
+    e.preventDefault();
+
+    const u = username.value.trim();
+    const p = password.value.trim();
+
+    if(!u || !p){
+        msg.innerText = "All fields required";
+        msg.style.color = "red";
+        return;
+    }
+
+    const form = new FormData();
+    form.append("username", u);
+    form.append("password", p);
+
+    const endpoint = isLogin ? "/login" : "/register";
+
+    const res = await fetch(endpoint, {
+        method: "POST",
+        body: form
+    });
+
+    const data = await res.json();
+    msg.innerText = data.message;
+    msg.style.color = res.ok ? "#22d3ee" : "red";
+
+    if(res.ok && isLogin){
+        clearForm(); // clear before redirect
+        window.location.href = "/dashboard?user=" + u;
+    }
+
+    if(res.ok && !isLogin){
+        clearForm(); // clear after register
+        toggleMode(); // switch back to login
+    }
+}
+</script>

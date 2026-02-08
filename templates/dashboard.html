@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solaris OS | Luxury Command</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Orbitron:wght@500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --lux-gold: #fbbf24;
+            --lux-cyan: #22d3ee;
+            --lux-bg: #020617;
+        }
+
+        body { 
+            background-color: var(--lux-bg); 
+            margin: 0; 
+            overflow: hidden; 
+            color: white; 
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Crystal Glass Effect */
+        .crystal-sidebar {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+            backdrop-filter: blur(30px) saturate(150%);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        }
+
+        /* Asteroid Info Luxury Panel */
+        #asteroid-info {
+            position: absolute;
+            top: 100px;
+            right: 30px;
+            width: 280px;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            color: white;
+            border-radius: 12px;
+            display: none;
+            z-index: 30;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        #asteroid-info h3 {
+            margin: 0 0 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            color: var(--lux-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #asteroid-info div {
+            margin-bottom: 6px;
+            font-size: 11px;
+            font-family: 'Inter', sans-serif;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 4px;
+        }
+
+        .nav-btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; width: 0%; height: 2px;
+            background: var(--lux-cyan);
+            transition: width 0.3s ease;
+        }
+        .nav-btn:hover::after { width: 100%; }
+        .nav-btn:hover { background: rgba(34, 211, 238, 0.05); transform: translateX(5px); }
+
+        #tooltip {
+            position: absolute;
+            padding: 8px 12px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--lux-cyan);
+            color: var(--lux-cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 2px;
+            border-radius: 2px;
+            pointer-events: none;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.3);
+        }
+
+        canvas { display: block; outline: none; }
+        .lux-text-glow { text-shadow: 0 0 10px rgba(34, 211, 238, 0.5); }
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+    </style>
+</head>
+<body class="font-sans antialiased">
+
+    <div id="tooltip">SYSTEM.SCANNING...</div>
+    <div id="asteroid-info"></div>
+
+    <div class="relative z-10 flex h-screen w-full overflow-hidden">
+        
+        <aside class="w-72 crystal-sidebar flex flex-col p-8 h-full z-20">
+            <div class="mb-16">
+                <div class="flex items-center gap-4 mb-2">
+                    <div class="w-3 h-3 bg-cyan-400 rounded-full animate-ping"></div>
+                    <span class="orbitron text-xs tracking-[0.5em] text-cyan-400">STATUS: ACTIVE</span>
+                </div>
+                <h1 class="text-3xl font-light orbitron tracking-tighter">SOLARIS<span class="font-bold text-cyan-400">.</span></h1>
+            </div>
+            
+            <nav class="flex-grow space-y-6">
+  <div>
+    <p class="text-[10px] orbitron tracking-[0.3em] text-slate-500 mb-4 ml-2">
+      NAVIGATION
+    </p>
+
+    <!-- Dashboard -->
+    <a href="/dashboard?user={{ username }}"
+       class="nav-btn w-full flex items-center justify-between px-4 py-3 rounded-lg text-slate-300">
+      <span class="flex items-center gap-3">
+        🪐 <span class="text-sm font-medium">System Core</span>
+      </span>
+      <span class="text-[10px] orbitron text-cyan-500">LIVE</span>
+    </a>
+
+    <!-- Asteroid Search -->
+    <a href="/asteroids/search"
+       class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 mt-2">
+      📡 <span class="text-sm">Asteroid Search</span>
+    </a>
+
+    <!-- Alerts -->
+    <a href="/alerts"
+       class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 mt-2">
+      🚨 <span class="text-sm">Alert Center</span>
+    </a>
+
+    <!-- Chat -->
+    <a href="/chat"
+       class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 mt-2">
+      💬 <span class="text-sm">Community Chat</span>
+    </a>
+  </div>
+</nav>
+
+
+            <button class="group mt-auto flex items-center justify-between p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-red-500/10 hover:border-red-500/20 transition-all duration-500">
+                <span class="text-[10px] orbitron tracking-widest text-slate-500 group-hover:text-red-400">LOG OUT</span>
+                <span class="text-xs group-hover:rotate-12 transition-transform">🔒</span>
+            </button>
+        </aside>
+
+        <main class="flex-grow flex flex-col relative">
+            
+            <header class="h-20 border-b border-white/5 flex items-center justify-between px-10 bg-slate-950/20 backdrop-blur-xl z-20">
+                <div class="flex gap-12">
+                    <div class="flex flex-col">
+                        <span class="text-[9px] orbitron text-slate-500 tracking-widest">CURRENT SECTOR</span>
+                        <span class="text-xs orbitron text-white lux-text-glow">ORION-NEBULA 09</span>
+                    </div>
+                    <div class="flex flex-col border-l border-white/10 pl-12">
+                        <span class="text-[9px] orbitron text-slate-500 tracking-widest">SYSTEM CLOCK</span>
+                        <span id="clock" class="text-xs orbitron text-white">00:00:00 UTC</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-6">
+                    <div class="h-8 w-px bg-white/10"></div>
+                    <div class="relative cursor-pointer group">
+                        <div class="p-2.5 rounded-full border border-white/10 group-hover:border-cyan-500/50 transition-all duration-500 bg-white/5">
+                            <button class="group mt-auto flex items-center justify-between p-1 rounded-xl border border-white/5 bg-white/5 hover:bg-red-500/10 hover:border-red-500/20 transition-all duration-500">
+                                <svg class="w-5 h-5 text-slate-400 group-hover:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            </button>
+                        </div>
+                        <span class="absolute top-0 right-0 w-2 h-2 bg-cyan-400 rounded-full border-2 border-slate-950 shadow-[0_0_8px_#22d3ee]"></span>
+                    </div>
+                </div>
+            </header>
+
+            <div id="solar-system-container" class="flex-grow relative bg-[#020617]">
+                <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_150px_rgba(0,0,0,0.8)] z-10"></div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        /* Clock Logic */
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toISOString().split('T')[1].split('.')[0] + " UTC";
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        /* ---------------- INTEGRATED REALISTIC SOLAR SYSTEM ---------------- */
+        const container = document.getElementById('solar-system-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 2000);
+        camera.position.set(0, 15, 25);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.minDistance = 5;
+        controls.maxDistance = 200;
+
+        scene.add(new THREE.PointLight(0xffffff, 2, 800));
+        scene.add(new THREE.AmbientLight(0x404040, 0.5));
+
+        /* Stars */
+        (() => {
+            const g = new THREE.BufferGeometry();
+            const p = new Float32Array(8000 * 3);
+            for (let i = 0; i < p.length; i++) p[i] = (Math.random() - 0.5) * 1500;
+            g.setAttribute("position", new THREE.BufferAttribute(p, 3));
+            scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 0.8, transparent: true, opacity: 0.8 })));
+        })();
+
+        /* Sun */
+        const sun = new THREE.Mesh(
+            new THREE.SphereGeometry(2.5, 64, 64),
+            new THREE.MeshStandardMaterial({ emissive: 0xffaa00, emissiveIntensity: 1.5 })
+        );
+        scene.add(sun);
+
+        const DISTANCE_SCALE = 10_000_000;
+        const AU_TO_UNITS = 149_597_870 / DISTANCE_SCALE;
+        const TIME_SCALE = 0.5; // Changed from 0 to 0.5 to show movement
+
+        /* Planets */
+        const planetsData = [
+            { name: "Mercury", size: .2, dist: 57_900_000, speed: .04, color: 0xaaaaaa },
+            { name: "Venus", size: .35, dist: 108_200_000, speed: .015, color: 0xffcc99 },
+            { name: "Earth", size: .5, dist: 149_600_000, speed: .01, color: 0x38bdf8 },
+            { name: "Mars", size: .3, dist: 227_900_000, speed: .008, color: 0xff5533 },
+            { name: "Jupiter", size: 1.1, dist: 778_600_000, speed: .004, color: 0xffaa88 },
+            { name: "Saturn", size: .9, dist: 1_433_500_000, speed: .003, color: 0xffddaa },
+            { name: "Uranus", size: .7, dist: 2_872_500_000, speed: .002, color: 0x88ccff },
+            { name: "Neptune", size: .7, dist: 4_495_100_000, speed: .0015, color: 0x3366ff }
+        ];
+
+        const orbitRings = [];
+        const planets = [];
+
+        function createOrbit(radius, name) {
+  const pts = [];
+  for (let i = 0; i <= 128; i++) {
+    const t = i / 128 * Math.PI * 2;
+    pts.push(new THREE.Vector3(Math.cos(t) * radius, 0, Math.sin(t) * radius));
+  }
+
+  const ring = new THREE.LineLoop(
+    new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      opacity: 0.1,
+      transparent: true
+    })
+  );
+
+  ring.userData = {
+    type: "planetOrbit",
+    name
+  };
+
+  scene.add(ring);
+  orbitRings.push(ring);
+}
+
+
+        planetsData.forEach(d => {
+            const pivot = new THREE.Object3D();
+            scene.add(pivot);
+            const radius = d.dist / DISTANCE_SCALE;
+            createOrbit(radius, d.name);
+
+            const planet = new THREE.Mesh(
+                new THREE.SphereGeometry(d.size, 32, 32),
+                new THREE.MeshStandardMaterial({ color: d.color, roughness: 0.5 })
+            );
+            planet.position.x = radius;
+            pivot.add(planet);
+            planets.push({ pivot, planet, angle: Math.random() * Math.PI * 2, speed: d.speed });
+            if (d.name === "Earth") window.earth = planet;
+            if (d.name === "Saturn") {
+                const ring = new THREE.Mesh(new THREE.RingGeometry(1.2, 2, 64), new THREE.MeshBasicMaterial({ color: 0xccccaa, side: THREE.DoubleSide, transparent: true, opacity: 0.5 }));
+                ring.rotation.x = Math.PI/2;
+                planet.add(ring);
+            }
+        });
+
+        /* Moon */
+        const moonPivot = new THREE.Object3D();
+        earth.add(moonPivot);
+        const moon = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), new THREE.MeshStandardMaterial({ color: 0xaaaaaa }));
+        moon.position.x = 1.2;
+        moonPivot.add(moon);
+        let moonAngle = 0;
+
+        /* Asteroids */
+const asteroidGeometry = new THREE.SphereGeometry(0.15, 8, 8);
+
+function createAsteroidMaterial(isHazardous) {
+  return new THREE.MeshStandardMaterial({
+    color: isHazardous ? 0xff0000 : 0x00ff66,   // 🔴 RED | 🟢 GREEN
+    emissive: isHazardous ? 0xff0000 : 0x00ff66,
+    emissiveIntensity: 0.6,
+    roughness: 0.4,
+    metalness: 0.1
+  });
+}
+
+
+        const asteroidMeshes = [];
+
+        function asteroidPosition(o) {
+            const a = parseFloat(o.semi_major_axis) * AU_TO_UNITS;
+            const e = parseFloat(o.eccentricity);
+            const i = THREE.MathUtils.degToRad(o.inclination);
+            const Ω = THREE.MathUtils.degToRad(o.ascending_node_longitude);
+            const ω = THREE.MathUtils.degToRad(o.perihelion_argument);
+            const M = THREE.MathUtils.degToRad(o.mean_anomaly);
+            const r = (a * (1 - e * e)) / (1 + e * Math.cos(M));
+            let pos = new THREE.Vector3(r * Math.cos(M), 0, r * Math.sin(M));
+            pos.applyAxisAngle(new THREE.Vector3(0,1,0), Ω);
+            pos.applyAxisAngle(new THREE.Vector3(1,0,0), i);
+            pos.applyAxisAngle(new THREE.Vector3(0,1,0), ω);
+            return pos;
+        }
+
+        function createAsteroidOrbit(orbital, name) {
+  const segments = 256;
+  const points = [];
+
+  const a = parseFloat(orbital.semi_major_axis) * AU_TO_UNITS;
+  const e = parseFloat(orbital.eccentricity);
+
+  const i = THREE.MathUtils.degToRad(orbital.inclination);
+  const Ω = THREE.MathUtils.degToRad(orbital.ascending_node_longitude);
+  const ω = THREE.MathUtils.degToRad(orbital.perihelion_argument);
+
+  for (let t = 0; t <= Math.PI * 2; t += (Math.PI * 2) / segments) {
+    const r = (a * (1 - e * e)) / (1 + e * Math.cos(t));
+
+    let p = new THREE.Vector3(
+      r * Math.cos(t),
+      0,
+      r * Math.sin(t)
+    );
+
+    // Rotate orbit correctly in 3D space
+    p.applyAxisAngle(new THREE.Vector3(0, 1, 0), Ω);
+    p.applyAxisAngle(new THREE.Vector3(1, 0, 0), i);
+    p.applyAxisAngle(new THREE.Vector3(0, 1, 0), ω);
+
+    points.push(p);
+  }
+
+  const geometry = new THREE.BufferGeometry().setFromPoints(points);
+  const material = new THREE.LineBasicMaterial({
+    color: 0x38bdf8,        // 🌤️ sky-blue
+    transparent: true,
+    opacity: 0.45
+  });
+
+  const orbit = new THREE.LineLoop(geometry, material);
+  orbit.userData = {
+    type: "asteroidOrbit",
+    name
+  };
+
+  scene.add(orbit);
+  orbitRings.push(orbit); // reuse existing hover system
+}
+
+
+        function updateAsteroidOrbit(mesh) {
+  const o = mesh.userData.orbital_data;
+
+  // Advance mean anomaly over time
+  mesh.userData.M += mesh.userData.n * TIME_SCALE * 0.01;
+
+  const a = parseFloat(o.semi_major_axis) * AU_TO_UNITS;
+  const e = parseFloat(o.eccentricity);
+  const i = THREE.MathUtils.degToRad(o.inclination);
+  const Ω = THREE.MathUtils.degToRad(o.ascending_node_longitude);
+  const ω = THREE.MathUtils.degToRad(o.perihelion_argument);
+  const M = mesh.userData.M;
+
+  // True heliocentric radius
+  const r = (a * (1 - e * e)) / (1 + e * Math.cos(M));
+
+  // Position in orbital plane
+  let pos = new THREE.Vector3(
+    r * Math.cos(M),
+    0,
+    r * Math.sin(M)
+  );
+
+  // Rotate into 3D space
+  pos.applyAxisAngle(new THREE.Vector3(0, 1, 0), Ω);
+  pos.applyAxisAngle(new THREE.Vector3(1, 0, 0), i);
+  pos.applyAxisAngle(new THREE.Vector3(0, 1, 0), ω);
+
+  mesh.position.copy(pos);
+}
+
+
+        const asteroidData = [
+  {
+    id: "2000433",
+    name: "433 Eros",
+    is_potentially_hazardous_asteroid: false,
+    diameter_km: 16.8,
+    velocity_km_s: 5.4,
+    hazardous: false,
+    risk_score: 22.4,
+    risk_label: "LOW",
+    orbital_data: {
+      semi_major_axis: "1.458120998",
+      eccentricity: ".22283594",
+      inclination: "10.828466",
+      ascending_node_longitude: "304.270102",
+      perihelion_argument: "178.929753",
+      mean_anomaly: "310.554327",
+      orbit_class: { orbit_class_type: "AMO" }
+    }
+  },
+
+  {
+    id: "2000719",
+    name: "719 Albert",
+    is_potentially_hazardous_asteroid: false,
+    diameter_km: 3.8,
+    velocity_km_s: 10.7,
+    hazardous: false,
+    risk_score: 11.8,
+    risk_label: "LOW",
+    orbital_data: {
+      semi_major_axis: "2.636590391",
+      eccentricity: ".54659580",
+      inclination: "11.573110",
+      ascending_node_longitude: "183.860971",
+      perihelion_argument: "156.189404",
+      mean_anomaly: "240.610273",
+      orbit_class: { orbit_class_type: "AMO" }
+    }
+  },
+
+  {
+    id: "2001566",
+    name: "1566 Icarus",
+    is_potentially_hazardous_asteroid: true,
+    diameter_km: 1.4,
+    velocity_km_s: 26.8,
+    hazardous: true,
+    risk_score: 71.8,
+    risk_label: "HIGH",
+    orbital_data: {
+      semi_major_axis: "1.078037837",
+      eccentricity: ".82700569",
+      inclination: "22.803220",
+      ascending_node_longitude: "87.952417",
+      perihelion_argument: "31.438216",
+      mean_anomaly: "153.078930",
+      orbit_class: { orbit_class_type: "APO" }
+    }
+  },
+
+  {
+    id: "2001620",
+    name: "1620 Geographos",
+    is_potentially_hazardous_asteroid: true,
+    diameter_km: 2.5,
+    velocity_km_s: 13.1,
+    hazardous: true,
+    risk_score: 54.1,
+    risk_label: "MODERATE",
+    orbital_data: {
+      semi_major_axis: "1.245776928",
+      eccentricity: ".33551219",
+      inclination: "13.335792",
+      ascending_node_longitude: "337.140792",
+      perihelion_argument: "277.018390",
+      mean_anomaly: "212.920448",
+      orbit_class: { orbit_class_type: "APO" }
+    }
+  },
+
+  {
+    id: "2001685",
+    name: "1685 Toro",
+    is_potentially_hazardous_asteroid: false,
+    diameter_km: 3.4,
+    velocity_km_s: 18.9,
+    hazardous: false,
+    risk_score: 26.5,
+    risk_label: "MODERATE",
+    orbital_data: {
+      semi_major_axis: "1.367838675",
+      eccentricity: ".43604874",
+      inclination: "9.381842",
+      ascending_node_longitude: "274.207749",
+      perihelion_argument: "127.275298",
+      mean_anomaly: "82.681630",
+      orbit_class: { orbit_class_type: "APO" }
+    }
+  },
+
+  {
+    id: "2001915",
+    name: "1915 Quetzalcoatl",
+    is_potentially_hazardous_asteroid: false,
+    diameter_km: 0.79,
+    velocity_km_s: 15.8,
+    hazardous: false,
+    risk_score: 39.7,
+    risk_label: "MODERATE",
+    orbital_data: {
+      semi_major_axis: "2.544841207",
+      eccentricity: ".57022463",
+      inclination: "20.399238",
+      ascending_node_longitude: "162.921648",
+      perihelion_argument: "347.755254",
+      mean_anomaly: "21.616447",
+      orbit_class: { orbit_class_type: "AMO" }
+    }
+  },
+  {
+  id: "2001916",
+  name: "1916 Boreas",
+  is_potentially_hazardous_asteroid: false,
+  diameter_km: 3.1,
+  velocity_km_s: 12.9,
+  hazardous: false,
+  risk_score: 21.8,
+  risk_label: "LOW",
+  orbital_data: {
+    semi_major_axis: "2.272666457",
+    eccentricity: ".44917616",
+    inclination: "12.877117",
+    ascending_node_longitude: "340.595405",
+    perihelion_argument: "335.854765",
+    mean_anomaly: "35.111281",
+    orbit_class: { orbit_class_type: "AMO" }
+  }
+},
+{
+  id: "2001917",
+  name: "1917 Cuyo",
+  is_potentially_hazardous_asteroid: false,
+  diameter_km: 2.1,
+  velocity_km_s: 19.5,
+  hazardous: false,
+  risk_score: 29.9,
+  risk_label: "LOW",
+  orbital_data: {
+    semi_major_axis: "2.149051318",
+    eccentricity: ".50553783",
+    inclination: "23.958779",
+    ascending_node_longitude: "188.274896",
+    perihelion_argument: "194.552572",
+    mean_anomaly: "160.089497",
+    orbit_class: { orbit_class_type: "AMO" }
+  }
+},
+{
+  id: "2001943",
+  name: "1943 Anteros",
+  is_potentially_hazardous_asteroid: false,
+  diameter_km: 2.3,
+  velocity_km_s: 16.7,
+  hazardous: false,
+  risk_score: 18.5,
+  risk_label: "LOW",
+  orbital_data: {
+    semi_major_axis: "1.430526828",
+    eccentricity: ".25591246",
+    inclination: "8.707703",
+    ascending_node_longitude: "246.293477",
+    perihelion_argument: "338.436618",
+    mean_anomaly: "260.374115",
+    orbit_class: { orbit_class_type: "AMO" }
+  }
+},
+{
+  id: "2001980",
+  name: "1980 Tezcatlipoca",
+  is_potentially_hazardous_asteroid: false,
+  diameter_km: 6.5,
+  velocity_km_s: 19.2,
+  hazardous: false,
+  risk_score: 34.1,
+  risk_label: "MODERATE",
+  orbital_data: {
+    semi_major_axis: "1.709394204",
+    eccentricity: ".36470583",
+    inclination: "26.869937",
+    ascending_node_longitude: "246.542639",
+    perihelion_argument: "115.472498",
+    mean_anomaly: "211.495410",
+    orbit_class: { orbit_class_type: "AMO" }
+  }
+},
+{
+  id: "2513529",
+  name: "513529 (2010 CR1)",
+  is_potentially_hazardous_asteroid: true,
+  diameter_km: 1.21,
+  velocity_km_s: 26.8,
+  hazardous: true,
+  risk_score: 71.8,
+  risk_label: "HIGH",
+  orbital_data: {
+    semi_major_axis: "2.138",
+    eccentricity: ".512",
+    inclination: "21.4",
+    ascending_node_longitude: "193.2",
+    perihelion_argument: "298.7",
+    mean_anomaly: "104.3",
+    orbit_class: { orbit_class_type: "APO" }
+  }
+},
+{
+  id: "2001864",
+  name: "1864 Daedalus",
+  is_potentially_hazardous_asteroid: false,
+  diameter_km: 6.2,
+  velocity_km_s: 18.9,
+  hazardous: false,
+  risk_score: 34.0,
+  risk_label: "MODERATE",
+  orbital_data: {
+    semi_major_axis: "1.460839442607629",
+    eccentricity: ".6144458277489829",
+    inclination: "22.21686942874592",
+    ascending_node_longitude: "6.596982062243947",
+    perihelion_argument: "325.6618125430447",
+    mean_anomaly: "257.570849159736",
+    orbit_class: { orbit_class_type: "APO" }
+  }
+},
+
+{
+  id: "2001865",
+  name: "1865 Cerberus",
+  is_potentially_hazardous_asteroid: false,
+  diameter_km: 1.6,
+  velocity_km_s: 15.2,
+  hazardous: false,
+  risk_score: 22.6,
+  risk_label: "LOW",
+  orbital_data: {
+    semi_major_axis: "1.079973388622895",
+    eccentricity: ".4668604223270595",
+    inclination: "16.10114472470396",
+    ascending_node_longitude: "212.8845372207993",
+    perihelion_argument: "325.2894601728289",
+    mean_anomaly: "319.6747516567343",
+    orbit_class: { orbit_class_type: "APO" }
+  }
+},
+
+{
+  id: "2001866",
+  name: "1866 Sisyphus",
+  is_potentially_hazardous_asteroid: false,
+  diameter_km: 7.0,
+  velocity_km_s: 17.3,
+  hazardous: false,
+  risk_score: 38.2,
+  risk_label: "MODERATE",
+  orbital_data: {
+    semi_major_axis: "1.893371942055526",
+    eccentricity: ".5381206723622337",
+    inclination: "41.20631191690848",
+    ascending_node_longitude: "63.44668494161508",
+    perihelion_argument: "293.0986339030978",
+    mean_anomaly: "140.6642409666836",
+    orbit_class: { orbit_class_type: "APO" }
+  }
+},
+
+{
+  id: "2001863",
+  name: "1863 Antinous",
+  is_potentially_hazardous_asteroid: false,
+  diameter_km: 2.3,
+  velocity_km_s: 14.1,
+  hazardous: false,
+  risk_score: 20.7,
+  risk_label: "LOW",
+  orbital_data: {
+    semi_major_axis: "2.260115814004572",
+    eccentricity: ".606266465273938",
+    inclination: "18.3786511592474",
+    ascending_node_longitude: "345.5512164517922",
+    perihelion_argument: "269.0745461729968",
+    mean_anomaly: "289.5644842625625",
+    orbit_class: { orbit_class_type: "APO" }
+  }
+},
+
+{
+  id: "2001627",
+  name: "1627 Ivar",
+  is_potentially_hazardous_asteroid: false,
+  diameter_km: 1.3,
+  velocity_km_s: 19.8,
+  hazardous: false,
+  risk_score: 27.4,
+  risk_label: "LOW",
+  orbital_data: {
+    semi_major_axis: "1.863058085",
+    eccentricity: ".39732288",
+    inclination: "8.456290",
+    ascending_node_longitude: "133.074671",
+    perihelion_argument: "167.839551",
+    mean_anomaly: "311.461002",
+    orbit_class: { orbit_class_type: "AMO" }
+  }
+},
+
+{
+  id: "2001580",
+  name: "1580 Betulia",
+  is_potentially_hazardous_asteroid: false,
+  diameter_km: 4.8,
+  velocity_km_s: 12.4,
+  hazardous: false,
+  risk_score: 23.9,
+  risk_label: "LOW",
+  orbital_data: {
+    semi_major_axis: "2.194974308",
+    eccentricity: ".48760448",
+    inclination: "52.187853",
+    ascending_node_longitude: "62.224847",
+    perihelion_argument: "159.717050",
+    mean_anomaly: "80.267185",
+    orbit_class: { orbit_class_type: "AMO" }
+  }
+},
+
+{
+  id: "2000887",
+  name: "887 Alinda",
+  is_potentially_hazardous_asteroid: false,
+  diameter_km: 4.2,
+  velocity_km_s: 15.7,
+  hazardous: false,
+  risk_score: 26.1,
+  risk_label: "LOW",
+  orbital_data: {
+    semi_major_axis: "2.473628777",
+    eccentricity: ".57116997",
+    inclination: "9.400059",
+    ascending_node_longitude: "110.405875",
+    perihelion_argument: "350.534501",
+    mean_anomaly: "81.540593",
+    orbit_class: { orbit_class_type: "AMO" }
+  }
+},
+
+{
+  id: "2001036",
+  name: "1036 Ganymed",
+  is_potentially_hazardous_asteroid: false,
+  diameter_km: 32.0,
+  velocity_km_s: 16.1,
+  hazardous: false,
+  risk_score: 41.2,
+  risk_label: "MODERATE",
+  orbital_data: {
+    semi_major_axis: "2.664968845",
+    eccentricity: ".53321328",
+    inclination: "26.680735",
+    ascending_node_longitude: "215.441190",
+    perihelion_argument: "132.503117",
+    mean_anomaly: "97.593849",
+    orbit_class: { orbit_class_type: "AMO" }
+  }
+},
+
+{
+  id: "2001221",
+  name: "1221 Amor",
+  is_potentially_hazardous_asteroid: false,
+  diameter_km: 1.5,
+  velocity_km_s: 17.2,
+  hazardous: false,
+  risk_score: 24.6,
+  risk_label: "LOW",
+  orbital_data: {
+    semi_major_axis: "1.919831260",
+    eccentricity: ".43463233",
+    inclination: "11.868823",
+    ascending_node_longitude: "171.237187",
+    perihelion_argument: "26.758225",
+    mean_anomaly: "59.870485",
+    orbit_class: { orbit_class_type: "AMO" }
+  }
+}
+];
+
+
+asteroidData.forEach(a => {
+  // 🌤️ Sky-blue orbit
+  createAsteroidOrbit(a.orbital_data, a.name);
+
+  const material = createAsteroidMaterial(a.is_potentially_hazardous_asteroid);
+  const mesh = new THREE.Mesh(asteroidGeometry, material);
+
+  mesh.userData = {
+    ...a,
+
+    // Mean anomaly (rad)
+    M: THREE.MathUtils.degToRad(a.orbital_data.mean_anomaly),
+
+    // Mean motion (Kepler’s 3rd law, AU based)
+    n: Math.sqrt(
+      1 / Math.pow(parseFloat(a.orbital_data.semi_major_axis), 3)
+    )
+  };
+
+  mesh.position.copy(asteroidPosition(a.orbital_data));
+
+  asteroidMeshes.push(mesh);
+  scene.add(mesh);
+});
+
+
+        /* Raycaster for Interaction */
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const tooltip = document.getElementById("tooltip");
+        const asteroidInfo = document.getElementById("asteroid-info");
+
+        container.addEventListener("mousemove", e => {
+            const rect = container.getBoundingClientRect();
+            mouse.x = ((e.clientX - rect.left) / container.clientWidth) * 2 - 1;
+            mouse.y = -((e.clientY - rect.top) / container.clientHeight) * 2 + 1;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            planets.forEach(p => {
+                p.angle += p.speed * TIME_SCALE * 0.1;
+                p.pivot.rotation.y = p.angle;
+                p.planet.rotation.y += 0.01;
+            });
+
+            moonAngle += 0.05 * TIME_SCALE;
+            moonPivot.rotation.y = moonAngle;
+            sun.rotation.y += 0.002;
+
+            asteroidMeshes.forEach(updateAsteroidOrbit);
+
+            raycaster.setFromCamera(mouse, camera);
+            const asteroidHits = raycaster.intersectObjects(asteroidMeshes);
+            const orbitHits = raycaster.intersectObjects(orbitRings);
+
+            orbitRings.forEach(o => o.material.opacity = 0.1);
+
+            if (asteroidHits.length) {
+                const a = asteroidHits[0].object.userData;
+                const o = a.orbital_data;
+                asteroidInfo.style.display = "block";
+                asteroidInfo.innerHTML = `
+  <h3>${a.name}</h3>
+
+  <div><b>ID:</b> ${a.id}</div>
+
+  <div>
+    <b>Hazardous:</b>
+    <span style="color:${a.hazardous ? '#ff4d4d' : '#22c55e'}">
+      ${a.hazardous ? 'TRUE' : 'FALSE'}
+    </span>
+  </div>
+
+  <div><b>Diameter:</b> ${a.diameter_km} km</div>
+  <div><b>Velocity:</b> ${a.velocity_km_s} km/s</div>
+
+  <div>
+    <b>Risk Score:</b>
+    <span style="color:${
+      a.risk_label === 'HIGH' ? '#ff4d4d' :
+      a.risk_label === 'MODERATE' ? '#fbbf24' :
+      '#22c55e'
+    }">
+      ${a.risk_score}
+    </span>
+  </div>
+
+  <div>
+    <b>Risk Level:</b>
+    <span style="color:${
+      a.risk_label === 'HIGH' ? '#ff4d4d' :
+      a.risk_label === 'MODERATE' ? '#fbbf24' :
+      '#22c55e'
+    }">
+      ${a.risk_label}
+    </span>
+  </div>
+
+  <div><b>Orbit Class:</b> ${o.orbit_class?.orbit_class_type}</div>
+`;
+
+
+                tooltip.style.display = "block";
+                tooltip.textContent = "TARGET: " + a.name;
+                tooltip.style.left = (mouse.x + 1) * container.clientWidth / 2 + rect.left + 20 + "px";
+            } else if (orbitHits.length) {
+  const ring = orbitHits[0].object;
+
+  orbitRings.forEach(o => o.material.opacity = 0.1);
+  ring.material.opacity = 0.7;
+
+  tooltip.style.display = "block";
+
+  tooltip.textContent =
+    ring.userData.type === "asteroidOrbit"
+      ? "ASTEROID ORBIT: " + ring.userData.name
+      : "PLANET ORBIT: " + ring.userData.name;
+}
+ else {
+                asteroidInfo.style.display = "none";
+                tooltip.style.display = "none";
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener("resize", () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+    </script>
+    <button type="button" onclick="logout()"
+  class="group mt-auto flex items-center justify-between p-4 rounded-xl
+         border border-white/5 bg-white/5
+         hover:bg-red-500/10 hover:border-red-500/20 transition-all duration-500">
+  <span class="text-[10px] orbitron tracking-widest text-slate-500 group-hover:text-red-400">
+    LOG OUT
+  </span>
+  <span class="text-xs group-hover:rotate-12 transition-transform">🔒</span>
+</button>
+
+    <script>
+  function logout() {
+    alert("Logout clicked");
+    window.location.href = "/";
+  }
+</script>
+ <button type="button"
+            onclick="logout()"
+            class="mt-6 px-4 py-3 rounded-lg bg-white/5 hover:bg-red-500/20 transition">
+      <span class="orbitron text-xs tracking-widest text-red-400">LOG OUT</span>
+    </button>
+  </aside>
+  <!-- 🔔 NOTIFICATION ICON -->
+      <button type="button"
+              onclick="goToAlerts()"
+              class="relative p-2 rounded-full border border-white/10 bg-white/5 hover:bg-cyan-500/20 transition cursor-pointer">
+
+        <!-- Bell SVG -->
+        <svg class="w-6 h-6 text-cyan-400"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11
+               a6.002 6.002 0 00-4-5.659V5
+               a2 2 0 10-4 0v.341
+               C7.67 6.165 6 8.388 6 11v3.159
+               c0 .538-.214 1.055-.595 1.436L4 17h5
+               m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+
+        <!-- Notification Dot -->
+        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+      </button>
+
+    </header>
+</body>
+</html>

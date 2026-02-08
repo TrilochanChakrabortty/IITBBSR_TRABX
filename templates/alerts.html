@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Asteroid Alert Center</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      background: #020617;
+      font-family: 'Orbitron', sans-serif;
+      color: white;
+    }
+
+    .alert-card {
+      border-left: 6px solid red;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 10px red; }
+      50% { box-shadow: 0 0 30px red; }
+      100% { box-shadow: 0 0 10px red; }
+    }
+  </style>
+</head>
+
+<body class="p-10">
+
+  <!-- 🔔 Alarm Sound -->
+  <audio id="alarmSound" loop>
+    <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
+    <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Page Title -->
+  <h1 class="text-3xl mb-4 text-red-500 tracking-widest">
+    🚨 ASTEROID ALERT CENTER
+  </h1>
+
+  <!-- 🔔 Sound Toggle -->
+  <div class="mb-6 flex items-center gap-4">
+    <button
+      id="soundToggle"
+      onclick="toggleSound()"
+      class="px-4 py-2 rounded-lg border border-red-500/50
+             text-red-400 hover:bg-red-500/20
+             transition-all duration-300"
+    >
+      🔔 Alarm: OFF
+    </button>
+
+    <span class="text-xs text-slate-400">
+      Enable sound for HIGH / CRITICAL alerts
+    </span>
+  </div>
+
+  <!-- Alerts Container -->
+  <div id="alerts" class="space-y-6"></div>
+
+  <script>
+  let alarmEnabled = false;
+  const alarm = document.getElementById("alarmSound");
+  const toggleBtn = document.getElementById("soundToggle");
+
+  // USER INTERACTION → ENABLE AUDIO
+  function toggleSound() {
+    alarmEnabled = !alarmEnabled;
+
+    toggleBtn.innerText = alarmEnabled
+      ? "🔕 Alarm: ON"
+      : "🔔 Alarm: OFF";
+
+    if (alarmEnabled) {
+      // 🔥 Play immediately on user click (browser allows this)
+      alarm.play().catch(err => console.log("Audio blocked:", err));
+    } else {
+      alarm.pause();
+      alarm.currentTime = 0;
+    }
+  }
+
+  async function loadAlerts() {
+    const res = await fetch("/asteroids/alerts");
+    const data = await res.json();
+
+    const container = document.getElementById("alerts");
+    container.innerHTML = "";
+
+    if (data.length === 0) {
+      container.innerHTML = `
+        <div class="text-green-400">
+          ✅ No HIGH or CRITICAL asteroid threats detected
+        </div>
+      `;
+
+      alarm.pause();
+      alarm.currentTime = 0;
+      return;
+    }
+
+    // 🔊 Only continue playing if user enabled it
+    if (alarmEnabled && alarm.paused) {
+      alarm.play().catch(() => {});
+    }
+
+    data.forEach(a => {
+      const color = a.risk_level === "CRITICAL"
+        ? "border-red-600 text-red-400"
+        : "border-yellow-500 text-yellow-400";
+
+      container.innerHTML += `
+        <div class="alert-card bg-black/50 p-6 rounded-xl ${color}">
+          <h2 class="text-xl">${a.name}</h2>
+          <p>Risk Level: <b>${a.risk_level}</b></p>
+          <p>Risk Score: ${a.risk_score}</p>
+          <p>Approach Date: ${a.close_approach_date}</p>
+          <p>Velocity: ${a.velocity_km_s} km/s</p>
+          <p>Diameter: ${a.diameter_km} km</p>
+        </div>
+      `;
+    });
+  }
+
+  loadAlerts();
+  setInterval(loadAlerts, 15000);
+</script>
+
+</body>
+</html>

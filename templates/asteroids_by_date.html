@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Asteroid Search by Date</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#020617] text-white p-10">
+
+  <h1 class="text-3xl mb-6 tracking-widest text-cyan-400">
+    ☄️ Asteroid Search by Date
+  </h1>
+
+  <div class="flex gap-4 mb-8">
+    <input
+      type="date"
+      id="dateInput"
+      class="px-4 py-2 bg-black border border-white/10 rounded"
+    >
+    <button
+      onclick="searchAsteroids()"
+      class="px-6 py-2 bg-cyan-500 text-black rounded"
+    >
+      Search
+    </button>
+  </div>
+
+  <div id="results" class="space-y-6"></div>
+
+  <script>
+    async function searchAsteroids() {
+      const date = document.getElementById("dateInput").value;
+      if (!date) {
+        alert("Please select a date");
+        return;
+      }
+
+      const res = await fetch(`/api/asteroids/by-date?date=${date}`);
+      const data = await res.json();
+
+      const container = document.getElementById("results");
+      container.innerHTML = "";
+
+      if (data.length === 0) {
+        container.innerHTML = `
+          <div class="text-green-400">
+            ✅ No asteroids detected on this date
+          </div>
+        `;
+        return;
+      }
+
+      data.forEach(a => {
+        container.innerHTML += `
+          <div class="bg-black/60 border border-white/10 p-6 rounded-xl">
+            <h2 class="text-xl text-cyan-300">${a.name}</h2>
+            <p>NEO ID: ${a.neo_id}</p>
+            <p>Diameter: ${a.diameter_km} km</p>
+            <p>Velocity: ${a.velocity_km_s} km/s</p>
+            <p>Miss Distance: ${a.miss_distance_km} km</p>
+            <p class="${a.hazardous ? 'text-red-400' : 'text-green-400'}">
+              Hazardous: ${a.hazardous}
+            </p>
+          </div>
+        `;
+      });
+    }
+  </script>
+
+</body>
+</html>

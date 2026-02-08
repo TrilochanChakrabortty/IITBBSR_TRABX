@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Community Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: #020617;
+      color: white;
+      font-family: Inter, sans-serif;
+    }
+  </style>
+</head>
+
+<body class="flex flex-col h-screen">
+
+  <!-- Header -->
+  <div class="p-4 bg-black/60 border-b border-white/10">
+    <h1 class="tracking-widest">🌍 ASTEROID COMMUNITY CHAT</h1>
+  </div>
+
+  <!-- Messages -->
+  <div id="messages" class="flex-1 p-4 space-y-2 overflow-y-auto"></div>
+
+  <!-- Input -->
+  <div class="p-4 bg-black/60 border-t border-white/10 flex gap-2">
+    <input
+      id="username"
+      placeholder="Your name"
+      class="w-1/4 px-3 py-2 bg-black border border-white/10 rounded"
+    />
+
+    <input
+      id="messageInput"
+      placeholder="Type a message..."
+      class="flex-1 px-3 py-2 bg-black border border-white/10 rounded"
+      onkeydown="if(event.key==='Enter') sendMessage()"
+    />
+
+    <button
+      onclick="sendMessage()"
+      class="px-4 py-2 bg-cyan-500 text-black rounded"
+    >
+      Send
+    </button>
+  </div>
+
+  <script>
+  const messages = document.getElementById("messages");
+
+  // 🔌 WebSocket connection
+  const ws = new WebSocket(`ws://${location.host}/ws/chat`);
+
+  ws.onopen = () => {
+    console.log("✅ WebSocket connected");
+  };
+
+  ws.onerror = (e) => {
+    console.error("❌ WebSocket error", e);
+  };
+
+  ws.onclose = () => {
+    console.warn("⚠️ WebSocket closed");
+  };
+
+  ws.onmessage = (event) => {
+    console.log("📩 Message received:", event.data);
+    const div = document.createElement("div");
+    div.className = "p-2 bg-white/5 rounded";
+    div.textContent = event.data;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  };
+
+  function sendMessage() {
+    const user = document.getElementById("username").value || "Anonymous";
+    const msg = document.getElementById("messageInput").value;
+
+    if (!msg) return;
+
+    console.log("📤 Sending:", `${user}: ${msg}`);
+    ws.send(`${user}: ${msg}`);
+
+    document.getElementById("messageInput").value = "";
+  }
+</script>
+
+</body>
+</html>
+
